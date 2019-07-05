@@ -10,7 +10,7 @@
 	</resultMap>
 
 	<select id="selectAll" resultMap="TestEntityResultMap">
-		select * from xxb_test
+		select * from xxb_test where fid='1'
 	</select>
 
 	<insert id="save" parameterType="com.xxb.mybatis.test.entity.TestEntity">

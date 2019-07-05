@@ -43,7 +43,7 @@ public class VersionLockExecutor implements Executor {
 	@Override
 	public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler,
 			CacheKey cacheKey, BoundSql boundSql) throws SQLException {
-		return executor.query(ms, parameter, rowBounds, resultHandler);
+		return executor.query(ms, parameter, rowBounds, resultHandler, cacheKey, boundSql);
 	}
 
 	@Override
