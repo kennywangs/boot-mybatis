@@ -1,0 +1,12 @@
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 30
+  tomcat:
+    uri-encoding: UTF-8
+  error:
+    path: /error
+spring:
+  profiles:
+    active: 

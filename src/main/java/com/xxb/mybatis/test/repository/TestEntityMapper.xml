@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.xxb.mybatis.test.repository.TestEntityMapper">
+
+	<resultMap id="TestEntityResultMap" type="com.xxb.mybatis.test.entity.TestEntity">
+		<id property="fid" column="fid" javaType="java.lang.String" />
+		<result property="fname" column="fname" javaType="java.lang.String" />
+		<result property="fdate" column="fdate" javaType="java.util.Date" />
+		<result property="version" column="version" javaType="java.lang.Integer" />
+	</resultMap>
+
+	<select id="selectAll" resultMap="TestEntityResultMap">
+		select * from xxb_test
+	</select>
+
+	<insert id="save" parameterType="com.xxb.mybatis.test.entity.TestEntity">
+		insert into xxb_test
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="fid != null">
+				fid,
+			</if>
+			<if test="fname != null">
+				fname,
+			</if>
+			<if test="fdate != null">
+				fdate,
+			</if>
+				version,
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="fid != null">
+				#{fid},
+			</if>
+			<if test="fname != null">
+				#{fname},
+			</if>
+			<if test="fdate != null">
+				#{fdate},
+			</if>
+			<choose>
+				<when test="version != null">
+					#{version},
+				</when>
+				<otherwise>
+					0
+				</otherwise>
+			</choose>
+		</trim>
+	</insert>
+
+	<update id="update" parameterType="com.xxb.mybatis.test.entity.TestEntity">
+		update xxb_test
+		<set>
+			<if test="fname != null">
+				fname = #{fname},
+			</if>
+			<if test="fdate != null">
+				fdate = #{fdate},
+			</if>
+				version = #{version} + 1,
+		</set>
+		where fid = #{fid} and version = #{version}
+	</update>
+
+</mapper>
