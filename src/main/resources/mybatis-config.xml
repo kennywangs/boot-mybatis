@@ -13,6 +13,7 @@
     </typeAliases> -->
     <plugins>
     	<plugin interceptor="com.xxb.mybatis.VersionInterceptor"></plugin>
+    	<plugin interceptor="com.xxb.mybatis.PageInterceptor"></plugin>
     </plugins>
     <mappers>
     </mappers>
