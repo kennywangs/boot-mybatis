@@ -85,7 +85,7 @@ public class PageInterceptor implements Interceptor {
 	@Override
 	public Object plugin(Object target) {
 		if (Executor.class.isAssignableFrom(target.getClass())) {
-			PageExecutor executor = new PageExecutor((Executor)target);
+			MyExecutor executor = new MyExecutor((Executor)target);
 			return Plugin.wrap(executor, this);
 		}
 		if (target instanceof StatementHandler) {

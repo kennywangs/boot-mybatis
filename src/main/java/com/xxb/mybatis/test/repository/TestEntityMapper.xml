@@ -8,9 +8,20 @@
 		<result property="fdate" column="fdate" javaType="java.util.Date" />
 		<result property="version" column="version" javaType="java.lang.Integer" />
 	</resultMap>
+	<resultMap type="com.xxb.mybatis.MybatisPage" id="Page_ResultMap">
+		<result column="count" property="total" />
+	</resultMap>
 
 	<select id="selectAll" resultMap="TestEntityResultMap">
 		select * from xxb_test where fid='1'
+	</select>
+	
+	<select id="queryPagedEntityBy" resultMap="Page_ResultMap">
+		select count(t.fid) as count from xxb_test t
+	</select>
+	
+	<select id="queryPagedEntityBy_list" resultMap="TestEntityResultMap">
+		select * from xxb_test t
 	</select>
 
 	<insert id="save" parameterType="com.xxb.mybatis.test.entity.TestEntity">

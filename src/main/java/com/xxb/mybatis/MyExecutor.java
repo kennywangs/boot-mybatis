@@ -1,9 +1,11 @@
 package com.xxb.mybatis;
 
+import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.cache.CacheKey;
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.executor.BatchResult;
@@ -17,16 +19,29 @@ import org.apache.ibatis.transaction.Transaction;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-public class PageExecutor implements Executor {
+import com.xxb.base.OptimisticLockingFailureException;
+
+public class MyExecutor implements Executor {
 
 	private Executor executor;
 
-	public PageExecutor(Executor executor) {
+	public MyExecutor(Executor executor) {
 		this.executor = executor;
 	}
 
 	@Override
 	public int update(MappedStatement ms, Object parameter) throws SQLException {
+		if (StringUtils.endsWith(ms.getId(), "update")) {
+			// version lock
+			Field verField = PluginUtil.findVersionField(parameter);
+			if (verField != null) {
+				int result = executor.update(ms, parameter);
+				if (result != 1) {
+					throw new OptimisticLockingFailureException("optimistic lock failed.");
+				}
+				return result;
+			}
+		}
 		return executor.update(ms, parameter);
 	}
 
@@ -39,10 +54,12 @@ public class PageExecutor implements Executor {
 			return rows;
 		}
 		E obj = rows.get(0);
+		// page implement
 		if (obj instanceof MybatisPage) {
 			MappedStatement listms = ms.getConfiguration().getMappedStatement(ms.getId()+MybatisPage.PageQuerySuffix);
 			MybatisPage page = (MybatisPage) obj;
-			List<?> content = executor.query(listms, parameter, rowBounds, resultHandler, null, listms.getBoundSql(parameter));
+			CacheKey listCacheKey = executor.createCacheKey(listms, parameter, rowBounds, listms.getBoundSql(parameter));
+			List<?> content = executor.query(listms, parameter, rowBounds, resultHandler, listCacheKey, listms.getBoundSql(parameter));
 			PageRequest pageRequest = null;
 			if (parameter instanceof Pageable) {
 				pageRequest = (PageRequest) parameter;
@@ -60,9 +77,8 @@ public class PageExecutor implements Executor {
 	public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler)
 			throws SQLException {
 		BoundSql boundSql = ms.getBoundSql(parameter);
-//		return query(ms, parameter, rowBounds, resultHandler,
-//				executor.createCacheKey(ms, parameter, rowBounds, boundSql), boundSql);
-		return query(ms, parameter, rowBounds, resultHandler, null, boundSql);
+		return query(ms, parameter, rowBounds, resultHandler,
+				executor.createCacheKey(ms, parameter, rowBounds, boundSql), boundSql);
 	}
 
 	@Override

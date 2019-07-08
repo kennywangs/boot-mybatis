@@ -4,6 +4,8 @@ import java.util.Date;
 
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -27,16 +29,22 @@ public class TestController {
 		t.setFid("1");
         t.setFname("4321");
         t.setFdate(new Date());
-        t.setVersion(0);
+        t.setVersion(1);
 //		int result = mapper.save(t);
 //        try {
-//        	int result = mapper.update(t);
+        	int result = mapper.update(t);
 //		} catch (Exception e) {
 //			if (e.getCause() instanceof com.xxb.base.OptimisticLockingFailureException) {
 //				return new MessResult(false, "OptimisticLockingFailureException");
 //			}
 //		}
 		return new MessResult("ok", mapper.selectAll());
+	}
+	
+	@GetMapping(value = "/testpage")
+	public MessResult testpage() throws Exception {
+		Page<TestEntity> page = mapper.queryPagedEntityBy(PageRequest.of(0, 2));
+		return new MessResult(true, "test page", page);
 	}
 	
 	@GetMapping(value = "/xmlrefresh")
