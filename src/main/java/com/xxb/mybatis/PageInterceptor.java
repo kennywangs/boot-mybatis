@@ -24,8 +24,9 @@ import org.springframework.data.domain.Pageable;
 //import com.alibaba.druid.pool.DruidDataSource;
 //import com.alibaba.druid.util.JdbcConstants;
 
-@Intercepts({@Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class}),
-	@Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class})})
+@Intercepts({ @Signature(type = StatementHandler.class, method = "prepare", args = { Connection.class, Integer.class }),
+		@Signature(type = Executor.class, method = "query", args = { MappedStatement.class, Object.class,
+				RowBounds.class, ResultHandler.class }) })
 public class PageInterceptor implements Interceptor {
 
 	@Override
@@ -41,8 +42,8 @@ public class PageInterceptor implements Interceptor {
 		MetaObject metaObject = SystemMetaObject.forObject(statementHandler);
 		MappedStatement mappedStatement = (MappedStatement) metaObject.getValue("delegate.mappedStatement");
 		if (!SqlCommandType.SELECT.equals(mappedStatement.getSqlCommandType())) {
-            return;
-        }
+			return;
+		}
 		String mapId = mappedStatement.getId();
 		boolean isPageable = mapId.contains(".queryPagedEntity") && mapId.endsWith(MybatisPage.PageQuerySuffix);
 		if (isPageable) {
@@ -59,8 +60,8 @@ public class PageInterceptor implements Interceptor {
 			 * 不需要分页的场合，如果 size 小于 0 返回结果集
 			 */
 			if (null == pageRequest || pageRequest.getPageSize() < 0) {
-	            return;
-	        }
+				return;
+			}
 			String sql = (String) metaObject.getValue("delegate.boundSql.sql");
 			sql = sql.trim();
 //			DruidDataSource ds = (DruidDataSource) SpringContextUtils.getBeanById("moduleDataSource");
@@ -75,7 +76,7 @@ public class PageInterceptor implements Interceptor {
 //				pageSql = "SELECT * FROM ( SELECT TMP.*, ROWNUM ROW_ID FROM ( " +
 //						sql + " ) TMP WHERE ROWNUM <=" + (pageRequest.getOffset()+pageRequest.getPageSize()) + ") WHERE ROW_ID > " + pageRequest.getOffset();
 //			}
-			
+
 			metaObject.setValue("delegate.boundSql.sql", pageSql);
 			metaObject.setValue("delegate.rowBounds.offset", RowBounds.NO_ROW_OFFSET);
 			metaObject.setValue("delegate.rowBounds.limit", RowBounds.NO_ROW_LIMIT);
@@ -85,7 +86,7 @@ public class PageInterceptor implements Interceptor {
 	@Override
 	public Object plugin(Object target) {
 		if (Executor.class.isAssignableFrom(target.getClass())) {
-			MyExecutor executor = new MyExecutor((Executor)target);
+			MyExecutor executor = new MyExecutor((Executor) target);
 			return Plugin.wrap(executor, this);
 		}
 		if (target instanceof StatementHandler) {
@@ -96,9 +97,9 @@ public class PageInterceptor implements Interceptor {
 
 	@Override
 	public void setProperties(Properties properties) {
-		
+
 	}
-	
+
 	private String getSqlServersql(String originalSql, PageRequest pageRequest) {
 		StringBuilder pagingBuilder = new StringBuilder();
 		String loweredString = originalSql.toLowerCase();
@@ -106,28 +107,29 @@ public class PageInterceptor implements Interceptor {
 		String distinctStr = StringUtils.EMPTY;
 		String sqlPartString = originalSql;
 		if (loweredString.startsWith("select")) {
-            int index = 6;
-            if (loweredString.startsWith("select distinct")) {
-                distinctStr = "DISTINCT ";
-                index = 15;
-            }
-            sqlPartString = sqlPartString.substring(index);
-        }
+			int index = 6;
+			if (loweredString.startsWith("select distinct")) {
+				distinctStr = "DISTINCT ";
+				index = 15;
+			}
+			sqlPartString = sqlPartString.substring(index);
+		}
 		pagingBuilder.append(sqlPartString);
 		// if no ORDER BY is specified use fake ORDER BY field to avoid errors
-        if (StringUtils.isEmpty(orderby)) {
-            orderby = "ORDER BY CURRENT_TIMESTAMP";
-        }
-        long firstParam = pageRequest.getOffset() + 1;
-        long secondParam = pageRequest.getOffset() + pageRequest.getPageSize();
-		String pageSql = "WITH selectTemp AS (SELECT " + distinctStr + "TOP 100 PERCENT " +
-	            " ROW_NUMBER() OVER (" + orderby + ") as __row_number__, " + pagingBuilder +
-	            ") SELECT * FROM selectTemp WHERE __row_number__ BETWEEN " +
-	            //原因：mysql中limit 10(offset,size) 是从第10开始（不包含10）,；而这里用的BETWEEN是两边都包含，所以改为offset+1
-	            firstParam + " AND " + secondParam + " ORDER BY __row_number__";
+		if (StringUtils.isEmpty(orderby)) {
+			orderby = "ORDER BY CURRENT_TIMESTAMP";
+		}
+		long firstParam = pageRequest.getOffset() + 1;
+		long secondParam = pageRequest.getOffset() + pageRequest.getPageSize();
+		String pageSql = "WITH selectTemp AS (SELECT " + distinctStr + "TOP 100 PERCENT " + " ROW_NUMBER() OVER ("
+				+ orderby + ") as __row_number__, " + pagingBuilder
+				+ ") SELECT * FROM selectTemp WHERE __row_number__ BETWEEN " +
+				// 原因：mysql中limit 10(offset,size)
+				// 是从第10开始（不包含10）,；而这里用的BETWEEN是两边都包含，所以改为offset+1
+				firstParam + " AND " + secondParam + " ORDER BY __row_number__";
 		return pageSql;
 	}
-	
+
 	private static String getOrderByPart(String sql) {
 		String loweredString = sql.toLowerCase();
 		int orderByIndex = loweredString.indexOf("order by");

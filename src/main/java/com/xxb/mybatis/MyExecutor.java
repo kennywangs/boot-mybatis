@@ -55,8 +55,10 @@ public class MyExecutor implements Executor {
 		}
 		E obj = rows.get(0);
 		// page implement
-		if (obj instanceof MybatisPage) {
-			MappedStatement listms = ms.getConfiguration().getMappedStatement(ms.getId()+MybatisPage.PageQuerySuffix);
+		String mapId = ms.getId();
+		boolean isPageable = mapId.contains(".queryPagedEntity");
+		if (isPageable && obj instanceof MybatisPage) {
+			MappedStatement listms = ms.getConfiguration().getMappedStatement(mapId+MybatisPage.PageQuerySuffix);
 			MybatisPage page = (MybatisPage) obj;
 			CacheKey listCacheKey = executor.createCacheKey(listms, parameter, rowBounds, listms.getBoundSql(parameter));
 			List<?> content = executor.query(listms, parameter, rowBounds, resultHandler, listCacheKey, listms.getBoundSql(parameter));
@@ -73,12 +75,18 @@ public class MyExecutor implements Executor {
 		return rows;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public <E> List<E> query(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler)
 			throws SQLException {
-		BoundSql boundSql = ms.getBoundSql(parameter);
-		return query(ms, parameter, rowBounds, resultHandler,
-				executor.createCacheKey(ms, parameter, rowBounds, boundSql), boundSql);
+		String mapId = ms.getId();
+		boolean isPageable = mapId.contains(".queryPagedEntity");
+		if (isPageable) {
+			BoundSql boundSql = ms.getBoundSql(parameter);
+			return query(ms, parameter, rowBounds, resultHandler,
+					executor.createCacheKey(ms, parameter, rowBounds, boundSql), boundSql);
+		}
+		return executor.query(ms, parameter, rowBounds, resultHandler);
 	}
 
 	@Override

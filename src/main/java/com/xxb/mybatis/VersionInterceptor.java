@@ -52,10 +52,10 @@ public class VersionInterceptor implements Interceptor {
 
 	@Override
 	public Object plugin(Object target) {
-		if (Executor.class.isAssignableFrom(target.getClass())) {
-			MyExecutor executor = new MyExecutor((Executor) target);
-			return Plugin.wrap(executor, this);
-		}
+//		if (Executor.class.isAssignableFrom(target.getClass())) {
+//			MyExecutor executor = new MyExecutor((Executor) target);
+//			return Plugin.wrap(executor, this);
+//		}
 		if (target instanceof StatementHandler) {
 			return Plugin.wrap(target, this);
 		}
